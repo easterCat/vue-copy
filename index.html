@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MVVM</title>
+  </head>
+  <body>
+    // https://www.bootcdn.cn/vue/
+    <script src="https://cdn.bootcss.com/vue/2.6.10/vue.js"></script>
+    <div id="msg">
+      {{ b.c }}这是普通文本{{ b.c + 1 + message }}这是普通文本
+      <p>{{ message }}</p>
+
+      <p><input type="text" v-model="message" /></p>
+      <p>{{ message }}</p>
+      <p>
+        <button type="button" v-on:click="clickBtn(message)">click me</button>
+      </p>
+    </div>
+    <script>
+      var vm = new Vue({
+        el: "#msg",
+        data: {
+          b: {
+            c: 1
+          },
+          message: "hello world"
+        },
+        methods: {
+          clickBtn: function(message) {
+            vm.message = "clicked";
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
