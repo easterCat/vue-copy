@@ -23,13 +23,14 @@
       <button v-on:click="showNodeEvent">kaiguan</button>
     </div>
 
-    <script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script>
-    <script src="./lib/observer.js"></script>
-    <script src="./lib/watcher.js"></script>
-    <script src="./lib/compile.js"></script>
-    <script src="./lib/mvvm.js"></script>
+    <!-- <script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script> -->
+    <script src="./js/observer.js"></script>
+    <!-- <script src="./lib/watcher.js"></script> -->
+    <script src="./js/updater.js"></script>
+    <script src="./js/compile.js"></script>
+    <script src="./js/mvvm.js"></script>
     <script>
-      var vm = new MVVM({
+      var vm = new Vuec({
         el: "#mvvm-app",
         data: {
           someStr: "hello ",
@@ -70,9 +71,10 @@
         },
         watch: {}
       });
-      vm.$watch("child.someStr", function() {
-        console.log(arguments);
-      });
+
+      // vm.$watch("child.someStr", function() {
+      //   console.log(arguments);
+      // });
     </script>
   </body>
 </html>

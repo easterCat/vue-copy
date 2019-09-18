@@ -1,0 +1,119 @@
+function Compile(el, vm) {
+  this.$vm = vm;
+  this.$el = el.nodeType === 1 ? el : document.querySelector(el);
+  if (this.$el) {
+    this.$fragment = this.nodeToFragment(this.$el);
+    this.compile(this.$fragment);
+    this.$el.appendChild(this.$fragment);
+  }
+}
+
+Compile.prototype.nodeToFragment = function(el) {
+  let fragment = document.createDocumentFragment();
+  let child;
+  while ((child = el.firstChild)) {
+    fragment.appendChild(child);
+  }
+  return fragment;
+};
+
+Compile.prototype.compile = function(fragment) {
+  let childNodes = fragment.childNodes;
+  let _this = this;
+  Array.prototype.slice.call(childNodes).forEach(node => {
+    let text = node.textContent;
+    let reg = /\{\{(.*)\}\}/; // 表达式文本
+    if (node.nodeType === 1) {
+      _this.compileElement(node);
+    } else if (node.nodeType === 3 && reg.test(text)) {
+      compileUtil.text(node, this.$vm, RegExp.$1);
+    }
+    if (node.childNodes && node.childNodes.length) {
+      _this.compile(node);
+    }
+  });
+};
+
+Compile.prototype.compileElement = function(element) {
+  let attrs = element.attributes;
+  let _this = this;
+  Array.prototype.slice.call(attrs).forEach(attr => {
+    let attrName = attr.name;
+    let attrValue = attr.value;
+    // 如 <span v-text="content"></span> 中指令为 v-text
+    if (attrName.indexOf("v-") === 0) {
+      let dir = attrName.substring(2);
+      if (dir.indexOf("on") === 0) {
+        compileUtil.eventHandler(element, _this.$vm, attrValue, dir);
+      } else {
+        compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
+      }
+      node.removeAttribute(attrName);
+    }
+  });
+};
+
+let compileUtil = {
+  text: function(node, vm, exp) {
+    this.bind(node, vm, exp, "text");
+  },
+  html: function(node, vm, exp) {
+    this.bind(node, vm, exp, "html");
+  },
+  model: function(node, vm, exp) {
+    this.bind(node, vm, exp, "model");
+
+    let _this = this;
+    let val = _this._getVMVal(vm, exp);
+    node.addEventListener("input", function(e) {
+      let newValue = e.target.value;
+      if (val === newValue) {
+        return;
+      }
+
+      _this._setVMVal(vm, exp, newValue);
+      val = newValue;
+    });
+  },
+  class: function(node, vm, exp) {
+    this.bind(node, vm, exp, "class");
+  },
+  bind: function(node, vm, exp, dir) {
+    let updaterFn = updater[dir + "Updater"];
+
+    updaterFn && updaterFn(node, this._getVMVal(vm, exp));
+
+    new Watcher(vm, exp, function(value, oldValue) {
+      updaterFn && updaterFn(node, value, oldValue);
+    });
+  },
+  eventHandler: function(node, vm, exp, dir) {
+    let eventType = dir.split(":")[1],
+      fn = vm.$options.methods && vm.$options.methods[exp];
+
+    if (eventType && fn) {
+      node.addEventListener(eventType, fn.bind(vm), false);
+    }
+  },
+  _getVMVal: function(vm, exp) {
+    let val = vm;
+    exp = exp.split(".");
+    exp.forEach(function(k) {
+      val = val[k];
+    });
+    return val;
+  },
+
+  _setVMVal: function(vm, exp, value) {
+    let val = vm;
+    exp = exp.split(".");
+    exp.forEach(function(k, i) {
+      // 非最后一个key，更新val的值
+      if (i < exp.length - 1) {
+        val = val[k];
+      } else {
+        val[k] = value;
+      }
+    });
+  }
+};
