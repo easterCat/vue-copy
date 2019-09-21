@@ -48,7 +48,7 @@ Compile.prototype.compileElement = function(element) {
       } else {
         compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
       }
-      node.removeAttribute(attrName);
+      element.removeAttribute(attrName);
     }
   });
 };
@@ -62,7 +62,6 @@ let compileUtil = {
   },
   model: function(node, vm, exp) {
     this.bind(node, vm, exp, "model");
-
     let _this = this;
     let val = _this._getVMVal(vm, exp);
     node.addEventListener("input", function(e) {
@@ -81,25 +80,24 @@ let compileUtil = {
   bind: function(node, vm, exp, dir) {
     let updaterFn = updater[dir + "Updater"];
 
-    updaterFn && updaterFn(node, this._getVMVal(vm, exp));
+    updaterFn && updaterFn(node, this._getVMVal(vm, exp, dir));
 
     new Watcher(vm, exp, function(value, oldValue) {
       updaterFn && updaterFn(node, value, oldValue);
     });
   },
   eventHandler: function(node, vm, exp, dir) {
-    let eventType = dir.split(":")[1],
-      fn = vm.$options.methods && vm.$options.methods[exp];
+    let eventType = dir.split(":")[1];
+    let fn = vm.options.methods && vm.options.methods[exp];
 
     if (eventType && fn) {
       node.addEventListener(eventType, fn.bind(vm), false);
     }
   },
-  _getVMVal: function(vm, exp) {
+  _getVMVal: function(vm, exp, dir) {
     let val = vm;
-    exp = exp.split(".");
-    exp.forEach(function(k) {
-      val = val[k];
+    exp.split(".").forEach(function(k) {
+      val = val[k.trim()];
     });
     return val;
   },

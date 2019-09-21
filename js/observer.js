@@ -17,16 +17,22 @@ Observer.prototype.walk = function(data) {
 };
 
 Observer.prototype.defineReactive = function(data, key, value) {
+  const dep = new Dep({ key });
   observer(value);
   Object.defineProperty(data, key, {
     enumerable: true,
     configurable: true,
     get: function() {
+      if (Dep.target) {
+        dep.depend();
+      }
       return value;
     },
     set: function(newValue) {
       if (value === newValue) return;
       value = newValue;
+      observer(newValue);
+      dep.notify();
     }
   });
 };
