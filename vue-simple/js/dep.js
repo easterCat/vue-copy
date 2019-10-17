@@ -6,19 +6,27 @@ class Dep {
     this.key = options.key ? options.key : "";
     this.subs = [];
   }
-  depend() {
-    Dep.target.addDep(this);
-  }
+
   addSub(sub) {
     this.subs.push(sub);
   }
+
   removeSub(sub) {
     if (this.subs.indexOf(sub) !== -1) {
       this.subs.splice(index, 1);
     }
   }
+
+  depend() {
+    if (Dep.target) {
+      Dep.target.addDep(this);
+    }
+  }
+
   notify() {
-    this.subs.forEach(sub => {
+    const subs = this.subs.slice();
+
+    subs.forEach(sub => {
       sub.update();
     });
   }

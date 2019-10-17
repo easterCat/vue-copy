@@ -1,4 +1,4 @@
-function Vuec(options) {
+function Vue(options) {
   let _this = this;
   this.options = options || {};
   this.data = options.data;
@@ -12,11 +12,13 @@ function Vuec(options) {
   this.$compile = new Compile(this.el, this);
 }
 
-Vuec.prototype.$watch = function(key, cb, options) {
+Vue.prototype.initState = function() {};
+
+Vue.prototype.$watch = function(key, cb, options) {
   new Watcher(this, key, cb);
 };
 
-Vuec.prototype._proxyData = function(key) {
+Vue.prototype._proxyData = function(key) {
   let _this = this;
   Object.defineProperty(_this, key, {
     configurable: false,
