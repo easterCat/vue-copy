@@ -86,8 +86,6 @@ handleClickEvent(e) {
 - Vue.use(plugin)
 - // 创建全局方法 this.$root.$on('test', callback) , this.$root.$off 关闭,this.$root.$emit 触发
 
-题目和答案来源于 [每日面试题]](https://github.com/haizlin/fe-interview/issues)
-
 ## 8.跟 keep-alive 有关的生命周期是哪些？描述下这些生命周期
 
 - activated： 页面第一次进入的时候,钩子触发的顺序是 created->mounted->activated
@@ -107,3 +105,5 @@ vm.\$options.data 可以获取到组件初始化状态下的 data
 ```
 Object.assign(this.$data, this.$options.data())
 ```
+
+## 题目和答案来源于 [vue 每日 3 问]](https://github.com/haizlin/fe-interview/issues)
