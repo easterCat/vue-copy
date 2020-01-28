@@ -29,7 +29,7 @@ Watcher.prototype.addDep = function(dep) {
 
 Watcher.prototype.get = function() {
   Dep.target = this;
-  let value = this.getter.call(this.vm, this.vm);
+  const value = this.getter.call(this.vm, this.vm);
   Dep.target = null;
   return value;
 };

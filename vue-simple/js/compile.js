@@ -25,7 +25,8 @@ Compile.prototype.compile = function(fragment) {
     let reg = /\{\{(.*)\}\}/; // 表达式文本
     if (node.nodeType === 1) {
       _this.compileElement(node);
-    } else if (node.nodeType === 3 && reg.test(text)) {
+    }
+    if (node.nodeType === 3 && reg.test(text)) {
       compileUtil.text(node, this.$vm, RegExp.$1);
     }
     if (node.childNodes && node.childNodes.length) {
@@ -53,7 +54,7 @@ Compile.prototype.compileElement = function(element) {
   });
 };
 
-let compileUtil = {
+const compileUtil = {
   text: function(node, vm, exp) {
     this.bind(node, vm, exp, "text");
   },
@@ -113,5 +114,23 @@ let compileUtil = {
         val[k] = value;
       }
     });
+  }
+};
+
+const updater = {
+  textUpdater: function(node, value) {
+    node.textContent = typeof value == "undefined" ? "" : value;
+  },
+  htmlUpdater: function(node, value) {
+    node.innerHTML = typeof value == "undefined" ? "" : value;
+  },
+  classUpdater: function(node, value, oldValue) {
+    let className = node.className;
+    className = className.replace(oldValue, "").replace(/\s$/, "");
+    let space = className && String(value) ? " " : "";
+    node.className = className + space + value;
+  },
+  modelUpdater: function(node, value, oldValue) {
+    node.value = typeof value == "undefined" ? "" : value;
   }
 };
