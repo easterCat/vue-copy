@@ -8,5 +8,7 @@
 ### 文档
 
 - [剖析 Vue 实现原理 - 如何实现双向绑定 mvvm](https://github.com/DMQ/mvvm)
-- [Vue.js 源码（1）：Hello World 的背后]()
+- [Vue.js 源码（1）：Hello World 的背后](https://segmentfault.com/a/1190000006866881)
 - [Vue.js 官方工程](https://github.com/DMQ/mvvm)
+- [Vue.js 技术揭秘](https://ustbhuangyi.github.io/vue-analysis/v2/prepare/)
+- [【Vue 原理】白话版](https://juejin.im/user/5a6fdcfc51882522b5529eb0/posts)
