@@ -20,16 +20,16 @@
         {{ someStr }}
         <span v-text="child.someStr"></span>
       </p>
-      <p>{{ getHelloWord }}</p>
+      <p>计算属性:{{ getHelloWord }}</p>
       <p v-html="htmlStr"></p>
-      <button v-on:click="clickBtn">change model</button>
+      <button v-on:click="clickBtn">变更显示内容</button>
       <ul v-if="showNode">
         <li>{{ number }}</li>
         <li>{{ number1 }}</li>
         <li>{{ number2 }}</li>
       </ul>
       <button v-on:click="showNodeEvent">kaiguan</button>
-      <pre><code>hello world , function alertA() {console.log('helloworld')}</code></pre>
+      <pre><code>{{ code }}</code></pre>
     </div>
 
     <!-- <script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script> -->
@@ -42,11 +42,11 @@
       var vm = new Vue({
         el: "#mvvm-app",
         data: {
-          someStr: "hello ",
+          someStr: "待到秋来九月八 ",
           className: "btn",
           htmlStr: '<span style="color: #f00;">red</span>',
           child: {
-            someStr: "World !"
+            someStr: "满城尽带黄金甲 !"
           },
           message: "this is test",
           number: 5,
@@ -55,21 +55,40 @@
           showNode: false,
           innerObj: {
             text: "内部对象文本"
-          }
+          },
+          code: "const a = 'hello world'; function alertA() {console.log(a)}"
         },
         computed: {
           getHelloWord: function() {
-            return this.someStr + this.child.someStr;
+            return (
+              "计算属性getHelloWord => " + this.someStr + this.child.someStr
+            );
           }
         },
+        beforeCreate() {
+          console.log("beforeCreate :");
+        },
+        created() {
+          console.log("created :");
+        },
+        beforeMount() {
+          console.log("beforeMount :");
+        },
+        mounted() {
+          console.log("mounted :");
+          this.child.someStr = "我花开后百花杀";
+        },
         methods: {
-          clickBtn: function(e) {
-            var randomStrArr = ["childOne", "childTwo", "childThree"];
+          clickBtn(e) {
+            var randomStrArr = ["李白", "杜甫", "辛弃疾"];
             this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
+            this.add();
+            this.code = "hello world";
           },
           add() {
-            this.number1 += 1;
-            this.number += 1;
+            this.number++;
+            this.number1++;
+            this.number2--;
           },
           show() {
             this.showNode = !this.showNode;
