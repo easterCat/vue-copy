@@ -4,14 +4,19 @@ class Vue {
     this.data = options.data;
     this.el = options.el || "body";
     this.initState();
+    callHook(vm, "beforeMount");
+    this._isMounted = true;
     this.$compile = new Compile(this.el, this);
+    callHook(vm, "mounted");
   }
   initState() {
     const _this = this;
     const ops = _this.options;
+    callHook(vm, "beforeCreate");
     ops.data && _this.initData();
     ops.methods && _this.initMethods();
     ops.computed && _this.initComputed();
+    callHook(vm, "created");
     this.initLifecycle(_this);
   }
   initData() {
@@ -41,13 +46,7 @@ class Vue {
       Object.defineProperty(_this, key, def);
     }
   }
-  initLifecycle(vm) {
-    callHook(vm, "beforeCreate");
-    callHook(vm, "created");
-    callHook(vm, "beforeMount");
-    vm._isMounted = true;
-    callHook(vm, "mounted");
-  }
+  initLifecycle(vm) {}
   $watch(key, cb, options) {
     new Watcher(this, key, cb);
   }

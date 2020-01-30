@@ -12,7 +12,7 @@
 
 发布者-订阅者模式: 一般通过 sub, pub 的方式实现数据和视图的绑定监听,更新数据方式通常做法是 vm.set('property', value)
 
-这种方式现在毕竟太 low 了,我们更希望通过 vm.property = value 这种方式更新数据,同时自动更新视图,于是有了下面两种方式
+现在更希望通过 vm.property = value 这种方式更新数据,同时自动更新视图,于是有了下面两种方式
 
 脏值检查: angular.js 是通过脏值检测的方式比对数据是否有变更,来决定是否更新视图,最简单的方式就是通过 setInterval() 定时轮询检测数据变动,当然 Google 不会这么 low,angular 只有在指定的事件触发时进入脏值检测,大致如下：
 
@@ -287,14 +287,20 @@ class Vue {
     this.data = options.data;
     this.el = options.el || "body";
     this.initState();
+    callHook(vm, "beforeMount");
+    this._isMounted = true;
     this.$compile = new Compile(this.el, this);
+    callHook(vm, "mounted");
   }
   initState() {
     const _this = this;
     const ops = _this.options;
+    callHook(vm, "beforeCreate");
     ops.data && _this.initData();
     ops.methods && _this.initMethods();
     ops.computed && _this.initComputed();
+    callHook(vm, "created");
+    this.initLifecycle(_this);
   }
   initData() {
     const _this = this;
@@ -323,6 +329,7 @@ class Vue {
       Object.defineProperty(_this, key, def);
     }
   }
+  initLifecycle(vm) {}
   $watch(key, cb, options) {
     new Watcher(this, key, cb);
   }
@@ -342,7 +349,7 @@ class Vue {
 }
 
 function makeComputedGetter(getter, owner) {
-  var watcher = new Watcher(owner, getter, function() {});
+  const watcher = new Watcher(owner, getter, function() {});
   return function computedGetter() {
     if (Dep.target) {
       watcher.depend();
@@ -350,10 +357,110 @@ function makeComputedGetter(getter, owner) {
     return watcher.value;
   };
 }
+
+function callHook(vm, hook) {
+  const handlers = vm.options[hook];
+  handlers && handlers.call(vm);
+}
+```
+
+## 使用
+
+```html
+<div id="mvvm-app">
+  <input type="text" v-model="someStr" />
+  <input type="text" v-model="child.someStr" />
+  <p v-class="className" class="abc">
+    {{ someStr }}
+    <span v-text="child.someStr"></span>
+  </p>
+  <p>计算属性:{{ getHelloWord }}</p>
+  <p v-html="htmlStr"></p>
+  <button v-on:click="clickBtn">变更显示内容</button>
+  <ul v-if="showNode">
+    <li>{{ number }}</li>
+    <li>{{ number1 }}</li>
+    <li>{{ number2 }}</li>
+  </ul>
+  <button v-on:click="showNodeEvent">kaiguan</button>
+  <pre><code>{{ code }}</code></pre>
+</div>
+
+<!-- <script src="http://cdn.bootcss.com/vue/1.0.24/vue.js"></script> -->
+<script src="./js/dep.js"></script>
+<script src="./js/observer.js"></script>
+<script src="./js/watcher.js"></script>
+<script src="./js/compile.js"></script>
+<script src="./js/vue.js"></script>
+<script>
+  var vm = new Vue({
+    el: "#mvvm-app",
+    data: {
+      someStr: "待到秋来九月八 ",
+      className: "btn",
+      htmlStr: '<span style="color: #f00;">red</span>',
+      child: {
+        someStr: "满城尽带黄金甲 !"
+      },
+      message: "this is test",
+      number: 5,
+      number1: 1,
+      number2: 2,
+      showNode: false,
+      innerObj: {
+        text: "内部对象文本"
+      },
+      code: "const a = 'hello world'; function alertA() {console.log(a)}"
+    },
+    computed: {
+      getHelloWord: function() {
+        return "计算属性getHelloWord => " + this.someStr + this.child.someStr;
+      }
+    },
+    beforeCreate() {
+      console.log("beforeCreate :");
+    },
+    created() {
+      console.log("created :");
+    },
+    beforeMount() {
+      console.log("beforeMount :");
+    },
+    mounted() {
+      console.log("mounted :");
+      this.child.someStr = "我花开后百花杀";
+    },
+    methods: {
+      clickBtn(e) {
+        var randomStrArr = ["李白", "杜甫", "辛弃疾"];
+        this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
+        this.add();
+        this.code = "hello world";
+      },
+      add() {
+        this.number++;
+        this.number1++;
+        this.number2--;
+      },
+      show() {
+        this.showNode = !this.showNode;
+      },
+      showNodeEvent() {
+        this.showNode = true;
+      }
+    },
+    watch: {}
+  });
+
+  vm.$watch("child.someStr", function() {
+    console.log(arguments);
+  });
+</script>
 ```
 
 ## 文档
 
+- [嗨，让我带你逐行剖析 Vue.js 源码](https://nlrx-wjc.github.io/Learn-Vue-Source-Code/start/#_1-%E5%89%8D%E8%A8%80)
 - [剖析 Vue 实现原理 - 如何实现双向绑定 mvvm](https://github.com/DMQ/mvvm)
 - [Vue.js 源码解析](https://github.com/answershuto/learnVue)
 - [Vue.js 源码（1）：Hello World 的背后](https://segmentfault.com/a/1190000006866881)
