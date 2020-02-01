@@ -13,7 +13,7 @@
     "types/*.d.ts"
   ],
   "scripts": {
-    "up": "git add . && git commit -m '快速提交' && git push origin master"
+    "push": "git add . && git commit -m '快速提交' && git push origin master"
   },
   "gitHooks": {
     "pre-commit": "lint-staged",
