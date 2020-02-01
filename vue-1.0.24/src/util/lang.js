@@ -9,31 +9,31 @@
  * @public
  */
 
-export function set (obj, key, val) {
+export function set(obj, key, val) {
   if (hasOwn(obj, key)) {
-    obj[key] = val
-    return
+    obj[key] = val;
+    return;
   }
   if (obj._isVue) {
-    set(obj._data, key, val)
-    return
+    set(obj._data, key, val);
+    return;
   }
-  var ob = obj.__ob__
+  var ob = obj.__ob__;
   if (!ob) {
-    obj[key] = val
-    return
+    obj[key] = val;
+    return;
   }
-  ob.convert(key, val)
-  ob.dep.notify()
+  ob.convert(key, val);
+  ob.dep.notify();
   if (ob.vms) {
-    var i = ob.vms.length
+    var i = ob.vms.length;
     while (i--) {
-      var vm = ob.vms[i]
-      vm._proxy(key)
-      vm._digest()
+      var vm = ob.vms[i];
+      vm._proxy(key);
+      vm._digest();
     }
   }
-  return val
+  return val;
 }
 
 /**
@@ -43,31 +43,31 @@ export function set (obj, key, val) {
  * @param {String} key
  */
 
-export function del (obj, key) {
+export function del(obj, key) {
   if (!hasOwn(obj, key)) {
-    return
+    return;
   }
-  delete obj[key]
-  var ob = obj.__ob__
+  delete obj[key];
+  var ob = obj.__ob__;
   if (!ob) {
     if (obj._isVue) {
-      delete obj._data[key]
-      obj._digest()
+      delete obj._data[key];
+      obj._digest();
     }
-    return
+    return;
   }
-  ob.dep.notify()
+  ob.dep.notify();
   if (ob.vms) {
-    var i = ob.vms.length
+    var i = ob.vms.length;
     while (i--) {
-      var vm = ob.vms[i]
-      vm._unproxy(key)
-      vm._digest()
+      var vm = ob.vms[i];
+      vm._unproxy(key);
+      vm._digest();
     }
   }
 }
 
-var hasOwnProperty = Object.prototype.hasOwnProperty
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 /**
  * Check whether the object has the property.
  *
@@ -75,8 +75,8 @@ var hasOwnProperty = Object.prototype.hasOwnProperty
  * @param {String} key
  * @return {Boolean}
  */
-export function hasOwn (obj, key) {
-  return hasOwnProperty.call(obj, key)
+export function hasOwn(obj, key) {
+  return hasOwnProperty.call(obj, key);
 }
 
 /**
@@ -86,9 +86,9 @@ export function hasOwn (obj, key) {
  * @return {Boolean}
  */
 
-var literalValueRE = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/
-export function isLiteral (exp) {
-  return literalValueRE.test(exp)
+var literalValueRE = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/;
+export function isLiteral(exp) {
+  return literalValueRE.test(exp);
 }
 
 /**
@@ -98,9 +98,9 @@ export function isLiteral (exp) {
  * @return {Boolean}
  */
 
-export function isReserved (str) {
-  var c = (str + '').charCodeAt(0)
-  return c === 0x24 || c === 0x5F
+export function isReserved(str) {
+  var c = (str + "").charCodeAt(0);
+  return c === 0x24 || c === 0x5f;
 }
 
 /**
@@ -111,10 +111,8 @@ export function isReserved (str) {
  * @return {String}
  */
 
-export function _toString (value) {
-  return value == null
-    ? ''
-    : value.toString()
+export function _toString(value) {
+  return value == null ? "" : value.toString();
 }
 
 /**
@@ -125,14 +123,12 @@ export function _toString (value) {
  * @return {*|Number}
  */
 
-export function toNumber (value) {
-  if (typeof value !== 'string') {
-    return value
+export function toNumber(value) {
+  if (typeof value !== "string") {
+    return value;
   } else {
-    var parsed = Number(value)
-    return isNaN(parsed)
-      ? value
-      : parsed
+    var parsed = Number(value);
+    return isNaN(parsed) ? value : parsed;
   }
 }
 
@@ -143,12 +139,8 @@ export function toNumber (value) {
  * @return {*|Boolean}
  */
 
-export function toBoolean (value) {
-  return value === 'true'
-    ? true
-    : value === 'false'
-      ? false
-      : value
+export function toBoolean(value) {
+  return value === "true" ? true : value === "false" ? false : value;
 }
 
 /**
@@ -158,12 +150,10 @@ export function toBoolean (value) {
  * @return {String | false}
  */
 
-export function stripQuotes (str) {
-  var a = str.charCodeAt(0)
-  var b = str.charCodeAt(str.length - 1)
-  return a === b && (a === 0x22 || a === 0x27)
-    ? str.slice(1, -1)
-    : str
+export function stripQuotes(str) {
+  var a = str.charCodeAt(0);
+  var b = str.charCodeAt(str.length - 1);
+  return a === b && (a === 0x22 || a === 0x27) ? str.slice(1, -1) : str;
 }
 
 /**
@@ -173,13 +163,13 @@ export function stripQuotes (str) {
  * @return {String}
  */
 
-var camelizeRE = /-(\w)/g
-export function camelize (str) {
-  return str.replace(camelizeRE, toUpper)
+var camelizeRE = /-(\w)/g;
+export function camelize(str) {
+  return str.replace(camelizeRE, toUpper);
 }
 
-function toUpper (_, c) {
-  return c ? c.toUpperCase() : ''
+function toUpper(_, c) {
+  return c ? c.toUpperCase() : "";
 }
 
 /**
@@ -189,11 +179,9 @@ function toUpper (_, c) {
  * @return {String}
  */
 
-var hyphenateRE = /([a-z\d])([A-Z])/g
-export function hyphenate (str) {
-  return str
-    .replace(hyphenateRE, '$1-$2')
-    .toLowerCase()
+var hyphenateRE = /([a-z\d])([A-Z])/g;
+export function hyphenate(str) {
+  return str.replace(hyphenateRE, "$1-$2").toLowerCase();
 }
 
 /**
@@ -208,9 +196,9 @@ export function hyphenate (str) {
  * @return {String}
  */
 
-var classifyRE = /(?:^|[-_\/])(\w)/g
-export function classify (str) {
-  return str.replace(classifyRE, toUpper)
+var classifyRE = /(?:^|[-_\/])(\w)/g;
+export function classify(str) {
+  return str.replace(classifyRE, toUpper);
 }
 
 /**
@@ -221,15 +209,15 @@ export function classify (str) {
  * @return {Function}
  */
 
-export function bind (fn, ctx) {
-  return function (a) {
-    var l = arguments.length
+export function bind(fn, ctx) {
+  return function(a) {
+    var l = arguments.length;
     return l
       ? l > 1
         ? fn.apply(ctx, arguments)
         : fn.call(ctx, a)
-      : fn.call(ctx)
-  }
+      : fn.call(ctx);
+  };
 }
 
 /**
@@ -240,14 +228,14 @@ export function bind (fn, ctx) {
  * @return {Array}
  */
 
-export function toArray (list, start) {
-  start = start || 0
-  var i = list.length - start
-  var ret = new Array(i)
+export function toArray(list, start) {
+  start = start || 0;
+  var i = list.length - start;
+  var ret = new Array(i);
   while (i--) {
-    ret[i] = list[i + start]
+    ret[i] = list[i + start];
   }
-  return ret
+  return ret;
 }
 
 /**
@@ -257,13 +245,13 @@ export function toArray (list, start) {
  * @param {Object} from
  */
 
-export function extend (to, from) {
-  var keys = Object.keys(from)
-  var i = keys.length
+export function extend(to, from) {
+  var keys = Object.keys(from);
+  var i = keys.length;
   while (i--) {
-    to[keys[i]] = from[keys[i]]
+    to[keys[i]] = from[keys[i]];
   }
-  return to
+  return to;
 }
 
 /**
@@ -275,8 +263,8 @@ export function extend (to, from) {
  * @return {Boolean}
  */
 
-export function isObject (obj) {
-  return obj !== null && typeof obj === 'object'
+export function isObject(obj) {
+  return obj !== null && typeof obj === "object";
 }
 
 /**
@@ -287,10 +275,10 @@ export function isObject (obj) {
  * @return {Boolean}
  */
 
-var toString = Object.prototype.toString
-var OBJECT_STRING = '[object Object]'
-export function isPlainObject (obj) {
-  return toString.call(obj) === OBJECT_STRING
+var toString = Object.prototype.toString;
+var OBJECT_STRING = "[object Object]";
+export function isPlainObject(obj) {
+  return toString.call(obj) === OBJECT_STRING;
 }
 
 /**
@@ -300,7 +288,7 @@ export function isPlainObject (obj) {
  * @return {Boolean}
  */
 
-export const isArray = Array.isArray
+export const isArray = Array.isArray;
 
 /**
  * Define a property.
@@ -311,13 +299,13 @@ export const isArray = Array.isArray
  * @param {Boolean} [enumerable]
  */
 
-export function def (obj, key, val, enumerable) {
+export function def(obj, key, val, enumerable) {
   Object.defineProperty(obj, key, {
     value: val,
     enumerable: !!enumerable,
     writable: true,
     configurable: true
-  })
+  });
 }
 
 /**
@@ -329,27 +317,27 @@ export function def (obj, key, val, enumerable) {
  * @return {Function} - the debounced function
  */
 
-export function debounce (func, wait) {
-  var timeout, args, context, timestamp, result
-  var later = function () {
-    var last = Date.now() - timestamp
+export function debounce(func, wait) {
+  var timeout, args, context, timestamp, result;
+  var later = function() {
+    var last = Date.now() - timestamp;
     if (last < wait && last >= 0) {
-      timeout = setTimeout(later, wait - last)
+      timeout = setTimeout(later, wait - last);
     } else {
-      timeout = null
-      result = func.apply(context, args)
-      if (!timeout) context = args = null
+      timeout = null;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
     }
-  }
-  return function () {
-    context = this
-    args = arguments
-    timestamp = Date.now()
+  };
+  return function() {
+    context = this;
+    args = arguments;
+    timestamp = Date.now();
     if (!timeout) {
-      timeout = setTimeout(later, wait)
+      timeout = setTimeout(later, wait);
     }
-    return result
-  }
+    return result;
+  };
 }
 
 /**
@@ -360,12 +348,12 @@ export function debounce (func, wait) {
  * @param {*} obj
  */
 
-export function indexOf (arr, obj) {
-  var i = arr.length
+export function indexOf(arr, obj) {
+  var i = arr.length;
   while (i--) {
-    if (arr[i] === obj) return i
+    if (arr[i] === obj) return i;
   }
-  return -1
+  return -1;
 }
 
 /**
@@ -375,16 +363,16 @@ export function indexOf (arr, obj) {
  * @return {Function}
  */
 
-export function cancellable (fn) {
-  var cb = function () {
+export function cancellable(fn) {
+  var cb = function() {
     if (!cb.cancelled) {
-      return fn.apply(this, arguments)
+      return fn.apply(this, arguments);
     }
-  }
-  cb.cancel = function () {
-    cb.cancelled = true
-  }
-  return cb
+  };
+  cb.cancel = function() {
+    cb.cancelled = true;
+  };
+  return cb;
 }
 
 /**
@@ -396,12 +384,13 @@ export function cancellable (fn) {
  * @return {Boolean}
  */
 
-export function looseEqual (a, b) {
+export function looseEqual(a, b) {
   /* eslint-disable eqeqeq */
-  return a == b || (
-    isObject(a) && isObject(b)
+  return (
+    a == b ||
+    (isObject(a) && isObject(b)
       ? JSON.stringify(a) === JSON.stringify(b)
-      : false
-  )
+      : false)
+  );
   /* eslint-enable eqeqeq */
 }

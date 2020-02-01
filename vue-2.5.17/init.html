@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>vue的初始化探索</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"
+    />
+    <script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+    <script>
+      hljs.initHighlightingOnLoad();
+    </script>
+  </head>
+  <body>
+    <div id="mvvm-app">
+      <input type="text" v-model="someStr" />
+      <input type="text" v-model="child.someStr" />
+      <p v-class="className" class="abc">
+        {{ someStr }}
+        <span v-text="child.someStr"></span>
+      </p>
+      <p>计算属性:{{ getHelloWord }}</p>
+      <p v-html="htmlStr"></p>
+      <button v-on:click="clickBtn">变更显示内容</button>
+      <ul v-if="showNode">
+        <li>{{ number }}</li>
+        <li>{{ number1 }}</li>
+        <li>{{ number2 }}</li>
+      </ul>
+      <button v-on:click="showNodeEvent">kaiguan</button>
+      <pre><code>{{ code }}</code></pre>
+      <div id="render"></div>
+    </div>
+
+    <script src="./dist/vue.js"></script>
+    <script>
+      const vm = new Vue({
+        el: "#mvvm-app",
+        data: {
+          someStr: "待到秋来九月八 ",
+          className: "btn",
+          htmlStr: '<span style="color: #f00;">red</span>',
+          child: {
+            someStr: "满城尽带黄金甲 !"
+          },
+          message: "this is test",
+          number: 5,
+          number1: 1,
+          number2: 2,
+          showNode: false,
+          innerObj: {
+            text: "内部对象文本"
+          },
+          code: "const a = 'hello world'; function alertA() {console.log(a)}",
+          message: "Hello world",
+          isShow: true
+        },
+        computed: {
+          getHelloWord: function() {
+            return (
+              "计算属性getHelloWord => " + this.someStr + this.child.someStr
+            );
+          }
+        },
+        beforeCreate() {
+          console.log("beforeCreate :");
+        },
+        created() {
+          console.log("created :");
+        },
+        beforeMount() {
+          console.log("beforeMount :");
+        },
+        mounted() {
+          console.log("mounted :");
+          this.child.someStr = "我花开后百花杀";
+        },
+        methods: {
+          clickBtn(e) {
+            var randomStrArr = ["李白", "杜甫", "辛弃疾"];
+            this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
+            this.add();
+            this.code = "hello world";
+          },
+          add() {
+            this.number++;
+            this.number1++;
+            this.number2--;
+          },
+          show() {
+            this.showNode = !this.showNode;
+          },
+          showNodeEvent() {
+            this.showNode = true;
+          }
+        },
+        watch: {}
+      });
+
+      vm.$watch("child.someStr", function() {
+        console.log(arguments);
+      });
+    </script>
+  </body>
+</html>
