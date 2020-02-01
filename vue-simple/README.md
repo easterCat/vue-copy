@@ -41,7 +41,7 @@
 
 ```js
 function observer(data) {
-  if (data !== null && typeof data === "object") {
+  if (data !== null && typeof data === 'object') {
     return new Observer(data);
   }
   return;
@@ -137,9 +137,9 @@ Compile.prototype.compileElement = function(element) {
     let attrName = attr.name;
     let attrValue = attr.value;
     // 如 <span v-text="content"></span> 中指令为 v-text
-    if (attrName.indexOf("v-") === 0) {
+    if (attrName.indexOf('v-') === 0) {
       let dir = attrName.substring(2);
-      if (dir.indexOf("on") === 0) {
+      if (dir.indexOf('on') === 0) {
         compileUtil.eventHandler(element, _this.$vm, attrValue, dir);
       } else {
         compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
@@ -170,7 +170,7 @@ class Watcher {
     this.cb = cb;
     this.depIds = {};
     this.deps = [];
-    if (typeof expOrFn === "function") {
+    if (typeof expOrFn === 'function') {
       this.getter = expOrFn;
     } else {
       this.getter = this.parseGetter(expOrFn.trim());
@@ -206,7 +206,7 @@ class Watcher {
   }
   parseGetter(exp) {
     if (/[^\w.$]/.test(exp)) return;
-    var exps = exp.split(".");
+    var exps = exp.split('.');
     return function(obj) {
       for (var i = 0, len = exps.length; i < len; i++) {
         if (!obj) return;
@@ -234,7 +234,7 @@ let depid = 0;
 
 function Dep(options) {
   this.id = depid++;
-  this.key = options.key ? options.key : "";
+  this.key = options.key ? options.key : '';
   this.subs = [];
 }
 
@@ -285,21 +285,21 @@ class Vue {
   constructor(options) {
     this.options = options || {};
     this.data = options.data;
-    this.el = options.el || "body";
+    this.el = options.el || 'body';
     this.initState();
-    callHook(vm, "beforeMount");
+    callHook(vm, 'beforeMount');
     this._isMounted = true;
     this.$compile = new Compile(this.el, this);
-    callHook(vm, "mounted");
+    callHook(vm, 'mounted');
   }
   initState() {
     const _this = this;
     const ops = _this.options;
-    callHook(vm, "beforeCreate");
+    callHook(vm, 'beforeCreate');
     ops.data && _this.initData();
     ops.methods && _this.initMethods();
     ops.computed && _this.initComputed();
-    callHook(vm, "created");
+    callHook(vm, 'created');
     this.initLifecycle(_this);
   }
   initData() {
@@ -394,48 +394,48 @@ function callHook(vm, hook) {
 <script src="./js/vue.js"></script>
 <script>
   var vm = new Vue({
-    el: "#mvvm-app",
+    el: '#mvvm-app',
     data: {
-      someStr: "待到秋来九月八 ",
-      className: "btn",
+      someStr: '待到秋来九月八 ',
+      className: 'btn',
       htmlStr: '<span style="color: #f00;">red</span>',
       child: {
-        someStr: "满城尽带黄金甲 !"
+        someStr: '满城尽带黄金甲 !'
       },
-      message: "this is test",
+      message: 'this is test',
       number: 5,
       number1: 1,
       number2: 2,
       showNode: false,
       innerObj: {
-        text: "内部对象文本"
+        text: '内部对象文本'
       },
       code: "const a = 'hello world'; function alertA() {console.log(a)}"
     },
     computed: {
       getHelloWord: function() {
-        return "计算属性getHelloWord => " + this.someStr + this.child.someStr;
+        return '计算属性getHelloWord => ' + this.someStr + this.child.someStr;
       }
     },
     beforeCreate() {
-      console.log("beforeCreate :");
+      console.log('beforeCreate :');
     },
     created() {
-      console.log("created :");
+      console.log('created :');
     },
     beforeMount() {
-      console.log("beforeMount :");
+      console.log('beforeMount :');
     },
     mounted() {
-      console.log("mounted :");
-      this.child.someStr = "我花开后百花杀";
+      console.log('mounted :');
+      this.child.someStr = '我花开后百花杀';
     },
     methods: {
       clickBtn(e) {
-        var randomStrArr = ["李白", "杜甫", "辛弃疾"];
+        var randomStrArr = ['李白', '杜甫', '辛弃疾'];
         this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
         this.add();
-        this.code = "hello world";
+        this.code = 'hello world';
       },
       add() {
         this.number++;
@@ -452,7 +452,7 @@ function callHook(vm, hook) {
     watch: {}
   });
 
-  vm.$watch("child.someStr", function() {
+  vm.$watch('child.someStr', function() {
     console.log(arguments);
   });
 </script>
