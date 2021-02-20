@@ -2,29 +2,29 @@ class Vue {
   constructor(options) {
     this.options = options || {};
     this.data = options.data;
-    this.el = options.el || 'body';
+    this.el = options.el || "body";
     this.initState(); // 初始化data,method,computed,watch
-    this.$mount(document.getElementById('render'));
-    callHook(this, 'beforeMount');
+    this.$mount(document.getElementById("render"));
+    callHook(this, "beforeMount");
     this._isMounted = true;
     this.$compile = new Compile(this.el, this);
-    callHook(this, 'mounted');
+    callHook(this, "mounted");
   }
   initState() {
     const vm = this;
     const ops = vm.options;
-    callHook(vm, 'beforeCreate');
+    callHook(vm, "beforeCreate");
     ops.data && vm.initData();
     ops.methods && vm.initMethods();
     ops.computed && vm.initComputed();
-    callHook(vm, 'created');
+    callHook(vm, "created");
     this.initLifecycle(vm);
   }
   initData() {
     const vm = this;
     const data = vm.options.data;
     // 通过Object.defineProperty 实现 vm.xxx -> vm._data.xxx
-    Object.keys(data).forEach(function(key) {
+    Object.keys(data).forEach(function (key) {
       vm.$proxyData(key);
     });
     observer(this.data);
@@ -40,12 +40,15 @@ class Vue {
     const vm = this;
     const computed = vm.options.computed;
     for (let key in computed) {
-      const userDef = computed[key];
-      const def = { enumerable: true, configurable: true };
-      def.get = makeComputedGetter(userDef, vm);
-      def.set = function() {};
-      Object.defineProperty(vm, key, def);
+      const userDef = computed[key]; // 获取用户定义的属性
+      vm.defineComputed(vm, key, userDef);
     }
+  }
+  defineComputed(vm, key, userDef) {
+    const def = { enumerable: true, configurable: true };
+    def.get = makeComputedGetter(userDef, vm);
+    def.set = userDef.set ? userDef.set : function () {};
+    Object.defineProperty(vm, key, def);
   }
   initLifecycle() {}
   $mount(element) {
@@ -115,19 +118,24 @@ class Vue {
     Object.defineProperty(vm, key, {
       configurable: false,
       enumerable: true,
-      get: function() {
+      get: function () {
         return vm.data[key];
       },
-      set: function(newVal) {
+      set: function (newVal) {
         vm.data[key] = newVal;
-      }
+      },
     });
   }
 }
 
-function makeComputedGetter(getter, owner) {
-  const watcher = new Watcher(owner, getter, function() {});
+function makeComputedGetter(getter, vm) {
+  const watcher = new Watcher(vm, getter, function () {}, { lazy: true });
   return function computedGetter() {
+    // 缓存控制
+    if (watcher.dirty) {
+      watcher.evaluate();
+    }
+
     if (Dep.target) {
       watcher.depend();
     }

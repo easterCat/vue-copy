@@ -19,9 +19,10 @@ class Compile {
   compile(fragment) {
     let childNodes = fragment.childNodes;
     let _this = this;
-    Array.prototype.slice.call(childNodes).forEach(node => {
+    Array.prototype.slice.call(childNodes).forEach((node) => {
       let text = node.textContent;
       let reg = /\{\{(.*)\}\}/; // 表达式文本
+
       if (node.nodeType === 1) {
         _this.compileElement(node);
       }
@@ -36,7 +37,7 @@ class Compile {
   compileElement(element) {
     const attrs = element.attributes;
     const _this = this;
-    Array.prototype.slice.call(attrs).forEach(attr => {
+    Array.prototype.slice.call(attrs).forEach((attr) => {
       let attrName = attr.name;
       let attrValue = attr.value;
       // 如 <span v-text="content"></span> 中指令为 v-text
@@ -55,17 +56,17 @@ class Compile {
 }
 
 const compileUtil = {
-  text: function(node, vm, exp) {
+  text: function (node, vm, exp) {
     this.bind(node, vm, exp, "text");
   },
-  html: function(node, vm, exp) {
+  html: function (node, vm, exp) {
     this.bind(node, vm, exp, "html");
   },
-  model: function(node, vm, exp) {
+  model: function (node, vm, exp) {
     this.bind(node, vm, exp, "model");
     let _this = this;
     let val = _this._getVMVal(vm, exp);
-    node.addEventListener("input", function(e) {
+    node.addEventListener("input", function (e) {
       let newValue = e.target.value;
       if (val === newValue) {
         return;
@@ -75,19 +76,19 @@ const compileUtil = {
       val = newValue;
     });
   },
-  class: function(node, vm, exp) {
+  class: function (node, vm, exp) {
     this.bind(node, vm, exp, "class");
   },
-  bind: function(node, vm, exp, dir) {
+  bind: function (node, vm, exp, dir) {
     let updaterFn = updater[dir + "Updater"];
 
     updaterFn && updaterFn(node, this._getVMVal(vm, exp, dir));
 
-    new Watcher(vm, exp, function(value, oldValue) {
+    new Watcher(vm, exp, function (value, oldValue) {
       updaterFn && updaterFn(node, value, oldValue);
     });
   },
-  eventHandler: function(node, vm, exp, dir) {
+  eventHandler: function (node, vm, exp, dir) {
     let eventType = dir.split(":")[1];
     let fn = vm.options.methods && vm.options.methods[exp];
 
@@ -95,18 +96,18 @@ const compileUtil = {
       node.addEventListener(eventType, fn.bind(vm), false);
     }
   },
-  _getVMVal: function(vm, exp, dir) {
+  _getVMVal: function (vm, exp, dir) {
     let val = vm;
-    exp.split(".").forEach(function(k) {
+    exp.split(".").forEach(function (k) {
       val = val[k.trim()];
     });
     return val;
   },
 
-  _setVMVal: function(vm, exp, value) {
+  _setVMVal: function (vm, exp, value) {
     let val = vm;
     exp = exp.split(".");
-    exp.forEach(function(k, i) {
+    exp.forEach(function (k, i) {
       // 非最后一个key，更新val的值
       if (i < exp.length - 1) {
         val = val[k];
@@ -114,23 +115,23 @@ const compileUtil = {
         val[k] = value;
       }
     });
-  }
+  },
 };
 
 const updater = {
-  textUpdater: function(node, value) {
+  textUpdater: function (node, value) {
     node.textContent = typeof value == "undefined" ? "" : value;
   },
-  htmlUpdater: function(node, value) {
+  htmlUpdater: function (node, value) {
     node.innerHTML = typeof value == "undefined" ? "" : value;
   },
-  classUpdater: function(node, value, oldValue) {
+  classUpdater: function (node, value, oldValue) {
     let className = node.className;
     className = className.replace(oldValue, "").replace(/\s$/, "");
     let space = className && String(value) ? " " : "";
     node.className = className + space + value;
   },
-  modelUpdater: function(node, value, oldValue) {
+  modelUpdater: function (node, value, oldValue) {
     node.value = typeof value == "undefined" ? "" : value;
-  }
+  },
 };

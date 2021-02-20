@@ -24,18 +24,18 @@ class Observer {
     Object.defineProperty(data, key, {
       enumerable: true,
       configurable: true,
-      get: function() {
+      get: function () {
         if (Dep.target) {
           dep.depend();
         }
         return value;
       },
-      set: function(newValue) {
+      set: function (newValue) {
         if (value === newValue) return;
         value = newValue;
         observer(newValue);
         dep.notify();
-      }
+      },
     });
   }
 }

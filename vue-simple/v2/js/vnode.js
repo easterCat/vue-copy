@@ -1,19 +1,35 @@
 function Vnode(tag, data, children, text, element) {
-  this.tag = tag;
-  this.data = data;
-  this.children = children;
-  this.text = text;
-  this.element = element;
+  this.tag = tag; // 标签名
+  this.data = data; // 存储节点的属性，class，style 等
+  this.children = children; // 子元素
+  this.text = text; // 文本内容
+  this.element = element; // Dom 节点
 }
 
 function createVnode(tag, data, children) {
-  return new Vnode(tag, data, normalizeChildren(children), undefined, undefined);
+  return new Vnode(
+    tag,
+    data,
+    normalizeChildren(children),
+    undefined,
+    undefined
+  );
 }
 
+function createTextNode(val) {
+  return new Vnode(undefined, undefined, undefined, String(val));
+}
+
+function emptyNodeAt(elm) {
+  return new Vnode(elm.tagName.toLowerCase(), {}, [], undefined, elm);
+}
+
+// 生成VNode 的时候，并不存在真实 DOM,element 会在需要创建DOM 时完成赋值，具体函数在 createElement 中
 function createElement(vnode) {
   if (!vnode) return;
   const { tag, data, children } = vnode;
 
+  // tag是正常html标签
   if (tag) {
     vnode.element = document.createElement(tag);
 
@@ -34,14 +50,10 @@ function createElement(vnode) {
 }
 
 function normalizeChildren(children) {
-  if (typeof children === 'string') {
+  if (typeof children === "string") {
     return [createTextNode(children)];
   }
   return children;
-}
-
-function createTextNode(val) {
-  return new Vnode(undefined, undefined, undefined, String(val));
 }
 
 function createChildren(vnode, children) {
@@ -49,10 +61,6 @@ function createChildren(vnode, children) {
   for (let index = 0; index < l; index++) {
     vnode.element.appendChild(createElement(children[index]));
   }
-}
-
-function emptyNodeAt(elm) {
-  return new Vnode(elm.tagName.toLowerCase(), {}, [], undefined, elm);
 }
 
 function sameVnode(vnode1, vnode2) {

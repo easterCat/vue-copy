@@ -1,4 +1,4 @@
-# Vue
+# 简单实现一个Vue
 
 ## 几种实现双向绑定的做法
 
@@ -41,47 +41,46 @@
 
 ```js
 function observer(data) {
-  if (data !== null && typeof data === 'object') {
+  if (data !== null && typeof data === "object") {
     return new Observer(data);
   }
   return;
 }
 
-function Observer(data) {
-  this.data = data;
-  this.walk(data);
+class Observer {
+  constructor(data) {
+    this.data = data;
+    this.walk(data);
+  }
+  walk(data) {
+    Object.entries(data).forEach(([key, value], index) => {
+      this.convert(key, value);
+    });
+  }
+  convert(key, val) {
+    this.defineReactive(this.data, key, val);
+  }
+  defineReactive(data, key, value) {
+    const dep = new Dep({ key });
+    observer(value);
+    Object.defineProperty(data, key, {
+      enumerable: true,
+      configurable: true,
+      get: function () {
+        if (Dep.target) {
+          dep.depend();
+        }
+        return value;
+      },
+      set: function (newValue) {
+        if (value === newValue) return;
+        value = newValue;
+        observer(newValue);
+        dep.notify();
+      },
+    });
+  }
 }
-
-Observer.prototype.walk = function(data) {
-  Object.entries(data).forEach(([key, value], index) => {
-    this.convert(key, value);
-  });
-};
-
-Observer.prototype.convert = function(key, val) {
-  this.defineReactive(this.data, key, val);
-};
-
-Observer.prototype.defineReactive = function(data, key, value) {
-  const dep = new Dep({ key });
-  observer(value);
-  Object.defineProperty(data, key, {
-    enumerable: true,
-    configurable: true,
-    get: function() {
-      if (Dep.target) {
-        dep.depend();
-      }
-      return value;
-    },
-    set: function(newValue) {
-      if (value === newValue) return;
-      value = newValue;
-      observer(newValue);
-      dep.notify();
-    }
-  });
-};
 ```
 
 ## 解析器 Compile
@@ -93,65 +92,143 @@ Observer.prototype.defineReactive = function(data, key, value) {
 - 添加监听数据的订阅者,一旦数据有变动,收到通知,更新视图
 
 ```js
-function Compile(el, vm) {
-  this.$vm = vm;
-  this.$el = el.nodeType === 1 ? el : document.querySelector(el);
-  if (this.$el) {
-    this.$fragment = this.nodeToFragment(this.$el);
-    this.compile(this.$fragment);
-    this.$el.appendChild(this.$fragment);
+class Compile {
+  constructor(el, vm) {
+    this.$vm = vm;
+    this.$el = el.nodeType === 1 ? el : document.querySelector(el);
+    if (this.$el) {
+      this.$fragment = this.nodeToFragment(this.$el);
+      this.compile(this.$fragment);
+      this.$el.appendChild(this.$fragment);
+    }
+  }
+  nodeToFragment(el) {
+    let fragment = document.createDocumentFragment();
+    let child;
+    while ((child = el.firstChild)) {
+      fragment.appendChild(child);
+    }
+    return fragment;
+  }
+  compile(fragment) {
+    let childNodes = fragment.childNodes;
+    let _this = this;
+    Array.prototype.slice.call(childNodes).forEach(node => {
+      let text = node.textContent;
+      let reg = /\{\{(.*)\}\}/; // 表达式文本
+      if (node.nodeType === 1) {
+        _this.compileElement(node);
+      }
+      if (node.nodeType === 3 && reg.test(text)) {
+        compileUtil.text(node, this.$vm, RegExp.$1);
+      }
+      if (node.childNodes && node.childNodes.length) {
+        _this.compile(node);
+      }
+    });
+  }
+  compileElement(element) {
+    const attrs = element.attributes;
+    const _this = this;
+    Array.prototype.slice.call(attrs).forEach(attr => {
+      let attrName = attr.name;
+      let attrValue = attr.value;
+      // 如 <span v-text="content"></span> 中指令为 v-text
+      if (attrName.indexOf("v-") === 0) {
+        let dir = attrName.substring(2);
+        // 绑定methods
+        if (dir.indexOf("on") === 0) {
+          compileUtil.eventHandler(element, _this.$vm, attrValue, dir);
+        } else {
+          compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
+        }
+        element.removeAttribute(attrName);
+      }
+    });
   }
 }
 
-Compile.prototype.nodeToFragment = function(el) {
-  let fragment = document.createDocumentFragment();
-  let child;
-  while ((child = el.firstChild)) {
-    fragment.appendChild(child);
-  }
-  return fragment;
-};
-
-Compile.prototype.compile = function(fragment) {
-  let childNodes = fragment.childNodes;
-  let _this = this;
-  Array.prototype.slice.call(childNodes).forEach(node => {
-    let text = node.textContent;
-    let reg = /\{\{(.*)\}\}/; // 表达式文本
-    if (node.nodeType === 1) {
-      _this.compileElement(node);
-    }
-    if (node.nodeType === 3 && reg.test(text)) {
-      compileUtil.text(node, this.$vm, RegExp.$1);
-    }
-    if (node.childNodes && node.childNodes.length) {
-      _this.compile(node);
-    }
-  });
-};
-
-Compile.prototype.compileElement = function(element) {
-  let attrs = element.attributes;
-  let _this = this;
-  Array.prototype.slice.call(attrs).forEach(attr => {
-    let attrName = attr.name;
-    let attrValue = attr.value;
-    // 如 <span v-text="content"></span> 中指令为 v-text
-    if (attrName.indexOf('v-') === 0) {
-      let dir = attrName.substring(2);
-      if (dir.indexOf('on') === 0) {
-        compileUtil.eventHandler(element, _this.$vm, attrValue, dir);
-      } else {
-        compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
+const compileUtil = {
+  text: function(node, vm, exp) {
+    this.bind(node, vm, exp, "text");
+  },
+  html: function(node, vm, exp) {
+    this.bind(node, vm, exp, "html");
+  },
+  model: function(node, vm, exp) {
+    this.bind(node, vm, exp, "model");
+    let _this = this;
+    let val = _this._getVMVal(vm, exp);
+    node.addEventListener("input", function(e) {
+      let newValue = e.target.value;
+      if (val === newValue) {
+        return;
       }
-      element.removeAttribute(attrName);
+
+      _this._setVMVal(vm, exp, newValue);
+      val = newValue;
+    });
+  },
+  class: function(node, vm, exp) {
+    this.bind(node, vm, exp, "class");
+  },
+  bind: function(node, vm, exp, dir) {
+    let updaterFn = updater[dir + "Updater"];
+
+    updaterFn && updaterFn(node, this._getVMVal(vm, exp, dir));
+
+    new Watcher(vm, exp, function(value, oldValue) {
+      updaterFn && updaterFn(node, value, oldValue);
+    });
+  },
+  eventHandler: function(node, vm, exp, dir) {
+    let eventType = dir.split(":")[1];
+    let fn = vm.options.methods && vm.options.methods[exp];
+
+    if (eventType && fn) {
+      node.addEventListener(eventType, fn.bind(vm), false);
     }
-  });
+  },
+  _getVMVal: function(vm, exp, dir) {
+    let val = vm;
+    exp.split(".").forEach(function(k) {
+      val = val[k.trim()];
+    });
+    return val;
+  },
+
+  _setVMVal: function(vm, exp, value) {
+    let val = vm;
+    exp = exp.split(".");
+    exp.forEach(function(k, i) {
+      // 非最后一个key，更新val的值
+      if (i < exp.length - 1) {
+        val = val[k];
+      } else {
+        val[k] = value;
+      }
+    });
+  }
 };
 
-const compileUtil = {};
+const updater = {
+  textUpdater: function(node, value) {
+    node.textContent = typeof value == "undefined" ? "" : value;
+  },
+  htmlUpdater: function(node, value) {
+    node.innerHTML = typeof value == "undefined" ? "" : value;
+  },
+  classUpdater: function(node, value, oldValue) {
+    let className = node.className;
+    className = className.replace(oldValue, "").replace(/\s$/, "");
+    let space = className && String(value) ? " " : "";
+    node.className = className + space + value;
+  },
+  modelUpdater: function(node, value, oldValue) {
+    node.value = typeof value == "undefined" ? "" : value;
+  }
+};
 
-const updater = {};
 ```
 
 ## 订阅者 Watcher
@@ -170,7 +247,7 @@ class Watcher {
     this.cb = cb;
     this.depIds = {};
     this.deps = [];
-    if (typeof expOrFn === 'function') {
+    if (typeof expOrFn === "function") {
       this.getter = expOrFn;
     } else {
       this.getter = this.parseGetter(expOrFn.trim());
@@ -206,7 +283,7 @@ class Watcher {
   }
   parseGetter(exp) {
     if (/[^\w.$]/.test(exp)) return;
-    var exps = exp.split('.');
+    var exps = exp.split(".");
     return function(obj) {
       for (var i = 0, len = exps.length; i < len; i++) {
         if (!obj) return;
@@ -232,36 +309,34 @@ data 中每个声明的属性,都会有一个 专属的依赖收集器 subs,保�
 ```js
 let depid = 0;
 
-function Dep(options) {
-  this.id = depid++;
-  this.key = options.key ? options.key : '';
-  this.subs = [];
+class Dep {
+  constructor(options) {
+    this.id = depid++;
+    this.key = options.key ? options.key : "";
+    this.subs = [];
+  }
+  addSub(watcherInstance) {
+    this.subs.push(watcherInstance);
+  }
+  removeSub(watcherInstance) {
+    if (this.subs.indexOf(watcherInstance) !== -1) {
+      this.subs.splice(index, 1);
+    }
+  }
+  depend() {
+    // Dep.target 指向的是 watcherInstance
+    Dep.target && Dep.target.addDep(this);
+  }
+  notify() {
+    const subs = this.subs.slice();
+    subs.forEach(sub => {
+      sub.update();
+    });
+  }
 }
 
-Dep.prototype.addSub = function(watchInstance) {
-  this.subs.push(watchInstance);
-};
-
-Dep.prototype.removeSub = function(watchInstance) {
-  if (this.subs.indexOf(watchInstance) !== -1) {
-    this.subs.splice(index, 1);
-  }
-};
-
-Dep.prototype.depend = function() {
-  // Dep.target = watchInstance
-  Dep.target && Dep.target.addDep(this);
-};
-
-Dep.prototype.notify = function() {
-  const subs = this.subs.slice();
-
-  subs.forEach(sub => {
-    sub.update();
-  });
-};
-
 Dep.target = null;
+
 ```
 
 - Object.defineProperty - get ,用于 依赖收集
@@ -270,6 +345,25 @@ Dep.target = null;
 - 每个 data 声明的属性,都拥有一个的专属依赖收集器 subs
 - 依赖收集器 subs 保存的依赖是 watcher
 - watcher 可用于 进行视图更新
+
+## methods实现
+
+- 简单来讲，遍历 methods 这个对象，然后逐个复制到实例上
+- methods是在创建实例过程中初始化的initState=>initMethods
+
+```js
+  initMethods() {
+    const vm = this;
+    const methods = vm.options.methods;
+    for (let key in methods) {
+      vm[key] = methods[key].bind(vm);
+    }
+  }
+```
+
+## computed实现
+
+- computed是在创建实例过程中初始化的initState=>initComputed
 
 ## mvvm 双向绑定
 
@@ -285,72 +379,140 @@ class Vue {
   constructor(options) {
     this.options = options || {};
     this.data = options.data;
-    this.el = options.el || 'body';
-    this.initState();
-    callHook(vm, 'beforeMount');
+    this.el = options.el || "body";
+    this.initState(); // 初始化data,method,computed,watch
+    this.$mount(document.getElementById("render"));
+    callHook(this, "beforeMount");
     this._isMounted = true;
     this.$compile = new Compile(this.el, this);
-    callHook(vm, 'mounted');
+    callHook(this, "mounted");
   }
   initState() {
-    const _this = this;
-    const ops = _this.options;
-    callHook(vm, 'beforeCreate');
-    ops.data && _this.initData();
-    ops.methods && _this.initMethods();
-    ops.computed && _this.initComputed();
-    callHook(vm, 'created');
-    this.initLifecycle(_this);
+    const vm = this;
+    const ops = vm.options;
+    callHook(vm, "beforeCreate");
+    ops.data && vm.initData();
+    ops.methods && vm.initMethods();
+    ops.computed && vm.initComputed();
+    callHook(vm, "created");
+    this.initLifecycle(vm);
   }
   initData() {
-    const _this = this;
-    const data = _this.options.data;
+    const vm = this;
+    const data = vm.options.data;
     // 通过Object.defineProperty 实现 vm.xxx -> vm._data.xxx
-    Object.keys(data).forEach(function(key) {
-      _this._proxyData(key);
+    Object.keys(data).forEach(function (key) {
+      vm.$proxyData(key);
     });
     observer(this.data);
   }
   initMethods() {
-    const _this = this;
-    const methods = _this.options.methods;
+    const vm = this;
+    const methods = vm.options.methods;
     for (let key in methods) {
-      _this[key] = methods[key].bind(_this);
+      vm[key] = methods[key].bind(vm);
     }
   }
   initComputed() {
-    const _this = this;
-    const computed = _this.options.computed;
+    const vm = this;
+    const computed = vm.options.computed;
     for (let key in computed) {
-      const userDef = computed[key];
-      const def = { enumerable: true, configurable: true };
-      def.get = makeComputedGetter(userDef, _this);
-      def.set = function() {};
-      Object.defineProperty(_this, key, def);
+      const userDef = computed[key]; // 获取用户定义的属性
+      vm.defineComputed(vm, key, userDef);
     }
   }
-  initLifecycle(vm) {}
+  defineComputed(vm, key, userDef) {
+    const def = { enumerable: true, configurable: true };
+    def.get = makeComputedGetter(userDef, vm);
+    def.set = userDef.set ? userDef.set : function () {};
+    Object.defineProperty(vm, key, def);
+  }
+  initLifecycle() {}
+  $mount(element) {
+    const vm = this;
+    const vnode = vm.render();
+    vm.$el = element;
+    vm.update(vnode);
+  }
+  update(vnode) {
+    const vm = this;
+    const prevVnode = vm._vnode;
+    vm._vnode = vnode;
+    if (!prevVnode) {
+      vm.$el = vm.patch(vm.$el, vnode);
+    } else {
+      vm.$el = vm.patch(prevVnode, vnode);
+    }
+  }
+  render() {
+    const vm = this;
+    return vm.options.render.call(vm);
+  }
+  patch(oldVnode, vnode) {
+    const isRealElement = !!oldVnode.nodeType;
+
+    if (!isRealElement && sameVnode(oldVnode, vnode)) {
+      this.patchNode(oldVnode, vnode);
+    } else {
+      if (isRealElement) {
+        oldVnode = emptyNodeAt(oldVnode);
+      }
+      const element = oldVnode.element;
+      const parent = element.parentNode;
+
+      if (parent) {
+        createElement(vnode);
+        parent.insertBefore(vnode.element, element);
+        parent.removeChild(element);
+      }
+    }
+  }
+  patchNode(oldNode, newNode) {
+    const element = (newNode.element = oldNode.element);
+    const oldC = oldNode.children;
+    const C = newNode.children;
+
+    if (!newNode.text) {
+      if (oldC && C) {
+        this.updateChildren(oldC, C);
+      }
+    } else if (oldNode.text !== newNode.text) {
+      element.textContent = newNode.text;
+    }
+  }
+  updateChildren(oldC, C) {
+    if (sameVnode(oldC[0], C[0])) {
+      this.patchNode(oldC[0], C[0]);
+    } else {
+      this.patch(oldC[0], C[0]);
+    }
+  }
   $watch(key, cb, options) {
     new Watcher(this, key, cb);
   }
-  _proxyData(key) {
-    const _this = this;
-    Object.defineProperty(_this, key, {
+  $proxyData(key) {
+    const vm = this;
+    Object.defineProperty(vm, key, {
       configurable: false,
       enumerable: true,
-      get: function() {
-        return _this.data[key];
+      get: function () {
+        return vm.data[key];
       },
-      set: function(newVal) {
-        _this.data[key] = newVal;
-      }
+      set: function (newVal) {
+        vm.data[key] = newVal;
+      },
     });
   }
 }
 
-function makeComputedGetter(getter, owner) {
-  const watcher = new Watcher(owner, getter, function() {});
+function makeComputedGetter(getter, vm) {
+  const watcher = new Watcher(vm, getter, function () {}, { lazy: true });
   return function computedGetter() {
+    // 缓存控制
+    if (watcher.dirty) {
+      watcher.evaluate();
+    }
+
     if (Dep.target) {
       watcher.depend();
     }
@@ -364,98 +526,249 @@ function callHook(vm, hook) {
 }
 ```
 
+## 虚拟节点VNode
+
+- 用 javascript 对象来描述真实 DOM，这么描述，把DOM标签，属性，内容都变成 对象的属性
+- 通过一个Vnode构造函数生成
+- 通过 createVnode 和 createTextNode 来生成节点
+
+```javascript
+function Vnode(tag, data, children, text, element) {
+  this.tag = tag; // 标签名
+  this.data = data; // 存储节点的属性，class，style 等
+  this.children = children; // 子元素
+  this.text = text; // 文本内容
+  this.element = element; // Dom 节点
+}
+
+function createVnode(tag, data, children) {
+  return new Vnode(
+    tag,
+    data,
+    normalizeChildren(children),
+    undefined,
+    undefined
+  );
+}
+
+function createTextNode(val) {
+  return new Vnode(undefined, undefined, undefined, String(val));
+}
+
+function emptyNodeAt(elm) {
+  return new Vnode(elm.tagName.toLowerCase(), {}, [], undefined, elm);
+}
+
+// 生成VNode 的时候，并不存在真实 DOM,element 会在需要创建DOM 时完成赋值，具体函数在 createElement 中
+function createElement(vnode) {
+  if (!vnode) return;
+  const { tag, data, children } = vnode;
+
+  // tag是正常html标签
+  if (tag) {
+    vnode.element = document.createElement(tag);
+
+    if (data.attrs) {
+      for (let key in data.attrs) {
+        vnode.element.setAttribute(key, data.attrs[key]);
+      }
+    }
+
+    if (children) {
+      createChildren(vnode, children);
+    }
+  } else {
+    vnode.element = document.createTextNode(vnode.text);
+  }
+
+  return vnode.element;
+}
+
+function normalizeChildren(children) {
+  if (typeof children === "string") {
+    return [createTextNode(children)];
+  }
+  return children;
+}
+
+function createChildren(vnode, children) {
+  const l = children.length;
+  for (let index = 0; index < l; index++) {
+    vnode.element.appendChild(createElement(children[index]));
+  }
+}
+
+function sameVnode(vnode1, vnode2) {
+  return vnode1.tag === vnode2.tag;
+}
+```
+
 ## 使用
 
 ```html
-<div id="mvvm-app">
-  <input type="text" v-model="someStr" />
-  <input type="text" v-model="child.someStr" />
-  <p v-class="className" class="abc">
-    {{ someStr }}
-    <span v-text="child.someStr"></span>
-  </p>
-  <p>计算属性:{{ getHelloWord }}</p>
-  <p v-html="htmlStr"></p>
-  <button v-on:click="clickBtn">变更显示内容</button>
-  <ul v-if="showNode">
-    <li>{{ number }}</li>
-    <li>{{ number1 }}</li>
-    <li>{{ number2 }}</li>
-  </ul>
-  <button v-on:click="showNodeEvent">kaiguan</button>
-  <pre><code>{{ code }}</code></pre>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>MVVM</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css" />
+		<script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
+		<script>
+			hljs.initHighlightingOnLoad()
+		</script>
+	</head>
+	<body>
+		<div id="mvvm-app">
+			<input type="text" v-model="someStr" />
+			<input type="text" v-model="child.someStr" />
+			<p v-class="className" class="abc">
+				{{ someStr }}
+				<span v-text="child.someStr"></span>
+			</p>
+			<p>计算属性:{{ getHelloWord }}</p>
+      <button v-on:click="changeSomeStr">changeSomeStr</button>
+      <button v-on:click="changeChildSomeStr">changeChildSomeStr</button>
+			<p v-html="htmlStr"></p>
+			<button v-on:click="clickBtn">变更显示内容</button>
+			<ul v-if="showNode">
+				<li>{{ number }}</li>
+				<li>{{ number1 }}</li>
+				<li>{{ number2 }}</li>
+			</ul>
+			<button v-on:click="showNodeEvent">kaiguan</button>
+			<pre><code>{{ code }}</code></pre>
+			<div id="render"></div>
+			<button v-on:click="handleVnodeChange">测试vnode切换</button>
+		</div>
 
-<!-- <script src="http://cdn.bootcss.com/vue/1.0.24/vue.js"></script> -->
-<script src="./js/dep.js"></script>
-<script src="./js/observer.js"></script>
-<script src="./js/watcher.js"></script>
-<script src="./js/compile.js"></script>
-<script src="./js/vue.js"></script>
-<script>
-  var vm = new Vue({
-    el: '#mvvm-app',
-    data: {
-      someStr: '待到秋来九月八 ',
-      className: 'btn',
-      htmlStr: '<span style="color: #f00;">red</span>',
-      child: {
-        someStr: '满城尽带黄金甲 !'
-      },
-      message: 'this is test',
-      number: 5,
-      number1: 1,
-      number2: 2,
-      showNode: false,
-      innerObj: {
-        text: '内部对象文本'
-      },
-      code: "const a = 'hello world'; function alertA() {console.log(a)}"
-    },
-    computed: {
-      getHelloWord: function() {
-        return '计算属性getHelloWord => ' + this.someStr + this.child.someStr;
-      }
-    },
-    beforeCreate() {
-      console.log('beforeCreate :');
-    },
-    created() {
-      console.log('created :');
-    },
-    beforeMount() {
-      console.log('beforeMount :');
-    },
-    mounted() {
-      console.log('mounted :');
-      this.child.someStr = '我花开后百花杀';
-    },
-    methods: {
-      clickBtn(e) {
-        var randomStrArr = ['李白', '杜甫', '辛弃疾'];
-        this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
-        this.add();
-        this.code = 'hello world';
-      },
-      add() {
-        this.number++;
-        this.number1++;
-        this.number2--;
-      },
-      show() {
-        this.showNode = !this.showNode;
-      },
-      showNodeEvent() {
-        this.showNode = true;
-      }
-    },
-    watch: {}
-  });
+		<!-- <script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script> -->
+		<script src="./js/dep.js"></script>
+		<script src="./js/observer.js"></script>
+		<script src="./js/watcher.js"></script>
+		<script src="./js/compile.js"></script>
+		<script src="./js/vnode.js"></script>
+		<script src="./js/vue.js"></script>
+		<script>
+			const vm = new Vue({
+				el: '#mvvm-app',
+				data: {
+					someStr: '待到秋来九月八 ',
+					className: 'btn',
+					htmlStr: '<span style="color: #f00;">red</span>',
+					child: {
+						someStr: '满城尽带黄金甲 !',
+					},
+					message: 'this is test',
+					number: 5,
+					number1: 1,
+					number2: 2,
+					showNode: false,
+					innerObj: {
+						text: '内部对象文本',
+					},
+					code: "const a = 'hello world'; function alertA() {console.log(a)}",
+					message: 'Hello world',
+					isShow: true,
+				},
+				computed: {
+					getHelloWord: function () {
+						return '计算属性getHelloWord => ' + this.someStr + this.child.someStr
+					},
+				},
+				render() {
+					return createVnode(
+						'div',
+						{
+							attrs: {
+								class: 'wrapper',
+							},
+						},
+						[
+							this.isShow
+								? createVnode(
+										'p',
+										{
+											attrs: {
+												class: 'inner',
+											},
+										},
+										this.message
+								  )
+								: createVnode(
+										'h1',
+										{
+											attrs: {
+												class: 'inner',
+											},
+										},
+										'change to inner - Hello world'
+								  ),
+						]
+					)
+				},
+				beforeCreate() {
+					console.log('beforeCreate :')
+				},
+				created() {
+					console.log('created :')
+				},
+				beforeMount() {
+					console.log('beforeMount :')
+				},
+				mounted() {
+					console.log('mounted :')
+					this.child.someStr = '我花开后百花杀'
+				},
+				methods: {
+					clickBtn(e) {
+						var randomStrArr = ['李白', '杜甫', '辛弃疾']
+						this.child.someStr = randomStrArr[parseInt(Math.random() * 3)]
+						this.add()
+						this.code = 'hello world'
+					},
+					add() {
+						this.number++
+						this.number1++
+						this.number2--
+					},
+					show() {
+						this.showNode = !this.showNode
+					},
+					showNodeEvent() {
+						this.showNode = true
+					},
+					handleVnodeChange() {
+						this.isShow = !this.isShow
+						this.update(this.render())
+					},
+          changeSomeStr(){
+            this.someStr = this.someStr + parseInt(Math.random(1, 100) * 1000 )
+          },
+          changeChildSomeStr(){
+             this.child.someStr = this.child.someStr + parseInt(Math.random(100, 1000) * 1000 )
+          },
+				},
+				watch: {},
+			})
 
-  vm.$watch('child.someStr', function() {
-    console.log(arguments);
-  });
-</script>
+			vm.$watch('child.someStr', function () {
+				console.log(arguments)
+			})
+
+			// test
+			setTimeout(function () {
+				vm.message = 'Hello'
+				vm.update(vm.render())
+			}, 2000)
+
+			setTimeout(function () {
+				vm.isShow = false
+				vm.update(vm.render())
+			}, 4000)
+		</script>
+	</body>
+</html>
+
 ```
 
 ## 文档
