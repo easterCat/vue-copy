@@ -3,10 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <title>vue的初始化探索</title>
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"
-        />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css" />
         <script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
         <script>
             hljs.initHighlightingOnLoad();
@@ -37,50 +34,50 @@
         <script>
             debugger;
             const vm = new Vue({
-                el: '#mvvm-app',
+                el: "#mvvm-app",
                 data: {
-                    someStr: '待到秋来九月八 ',
-                    className: 'btn',
+                    someStr: "待到秋来九月八 ",
+                    className: "btn",
                     htmlStr: '<span style="color: #f00;">red</span>',
                     child: {
-                        someStr: '满城尽带黄金甲 !'
+                        someStr: "满城尽带黄金甲 !",
                     },
-                    message: 'this is test',
+                    message: "this is test",
                     number: 5,
                     number1: 1,
                     number2: 2,
                     showNode: false,
                     innerObj: {
-                        text: '内部对象文本'
+                        text: "内部对象文本",
                     },
                     code: "const a = 'hello world'; function alertA() {console.log(a)}",
-                    message: 'Hello world',
-                    isShow: true
+                    message: "Hello world",
+                    isShow: true,
                 },
                 computed: {
-                    getHelloWord: function() {
-                        return '计算属性getHelloWord => ' + this.someStr + this.child.someStr;
-                    }
+                    getHelloWord: function () {
+                        return "计算属性getHelloWord => " + this.someStr + this.child.someStr;
+                    },
                 },
                 beforeCreate() {
-                    console.log('beforeCreate :');
+                    console.log("beforeCreate :");
                 },
                 created() {
-                    console.log('created :');
+                    console.log("created :");
                 },
                 beforeMount() {
-                    console.log('beforeMount :');
+                    console.log("beforeMount :");
                 },
                 mounted() {
-                    console.log('mounted :');
-                    this.child.someStr = '我花开后百花杀';
+                    console.log("mounted :");
+                    this.child.someStr = "我花开后百花杀";
                 },
                 methods: {
                     clickBtn(e) {
-                        var randomStrArr = ['李白', '杜甫', '辛弃疾'];
+                        var randomStrArr = ["李白", "杜甫", "辛弃疾"];
                         this.child.someStr = randomStrArr[parseInt(Math.random() * 3)];
                         this.add();
-                        this.code = 'hello world';
+                        this.code = "hello world";
                     },
                     add() {
                         this.number++;
@@ -92,12 +89,12 @@
                     },
                     showNodeEvent() {
                         this.showNode = true;
-                    }
+                    },
                 },
-                watch: {}
+                watch: {},
             });
 
-            vm.$watch('child.someStr', function() {
+            vm.$watch("child.someStr", function () {
                 console.log(arguments);
             });
         </script>
