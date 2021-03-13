@@ -1,4 +1,5 @@
-class Watcher {
+import { Dep } from "./dep";
+export class Watcher {
     constructor(vm, expOrFn, cb, options) {
         this.vm = vm;
         // lazy 表示一种固定描述，不可改变，表示这个 watcher 需要缓存

@@ -210,7 +210,7 @@ export function classify(str) {
  */
 
 export function bind(fn, ctx) {
-  return function(a) {
+  return function (a) {
     var l = arguments.length;
     return l
       ? l > 1
@@ -304,7 +304,7 @@ export function def(obj, key, val, enumerable) {
     value: val,
     enumerable: !!enumerable,
     writable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
@@ -319,7 +319,7 @@ export function def(obj, key, val, enumerable) {
 
 export function debounce(func, wait) {
   var timeout, args, context, timestamp, result;
-  var later = function() {
+  var later = function () {
     var last = Date.now() - timestamp;
     if (last < wait && last >= 0) {
       timeout = setTimeout(later, wait - last);
@@ -329,7 +329,7 @@ export function debounce(func, wait) {
       if (!timeout) context = args = null;
     }
   };
-  return function() {
+  return function () {
     context = this;
     args = arguments;
     timestamp = Date.now();
@@ -364,12 +364,12 @@ export function indexOf(arr, obj) {
  */
 
 export function cancellable(fn) {
-  var cb = function() {
+  var cb = function () {
     if (!cb.cancelled) {
       return fn.apply(this, arguments);
     }
   };
-  cb.cancel = function() {
+  cb.cancel = function () {
     cb.cancelled = true;
   };
   return cb;

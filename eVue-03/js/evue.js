@@ -1,4 +1,10 @@
-export class Vue {
+import { observer } from "./observer";
+import { Compile } from "./compile";
+import { Watcher } from "./watcher";
+import { emptyNodeAt, createElement, sameVnode } from "./vnode";
+import { Dep } from "./dep";
+
+export class EVue {
     constructor(options) {
         this.options = options || {};
         this.data = options.data;

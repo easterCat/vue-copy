@@ -5,9 +5,9 @@ export default {
     input: "./eVue-03/index.js", // 引入的文件
     output: [
         {
-            format: "umd", //  五种输出格式：amd /  es6 / iife / umd / cjs amd commonjs规范  默认将打包后的结果挂载到window上
-            file: "eVue/eVue.js", // 打包出的vue.js 文件  new Vue
-            name: "eVue",
+            format: "umd", //  五种输出格式：amd /  es6 / iife / umd / cjs
+            file: "eVue/eVue.js",
+            name: "EVue",
             sourcemap: true,
         },
         { file: "eVue/eVue.common.js", format: "cjs", name: "eVue", sourcemap: true },
@@ -16,6 +16,7 @@ export default {
     plugins: [
         babel({
             // 解析es6 -》 es5
+            extensions: [".js", ".ts"],
             exclude: "node_modules/**", // 排除文件的操作 glob
         }),
         serve({
@@ -23,7 +24,7 @@ export default {
             open: true,
             openPage: "/eVue-03/index.html", // 打开的页面
             port: 7777,
-            contentBase: "",
+            contentBase: "", //服务器启动的文件夹，默认是项目根目录，需要在该文件下创建index.html
         }),
     ],
 };

@@ -32,18 +32,9 @@
             <div id="render"></div>
             <button v-on:click="handleVnodeChange">测试vnode切换</button>
         </div>
-        <script src="../eVue/eVue.js"></script>
+        <script src="../../eVue/eVue.js"></script>
         <script>
-            helloWorld();
-        </script>
-        <!-- <script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script> -->
-        <!-- <script src="./js/observer.js"></script>
-        <script src="./js/watcher.js"></script>
-        <script src="./js/compile.js"></script>
-        <script src="./js/vnode.js"></script>
-        <script src="./js/vue.js"></script>
-        <script>
-            const vm = new Vue({
+            const vm = new EVue({
                 el: "#mvvm-app",
                 data: {
                     someStr: "待到秋来九月八 ",
@@ -70,7 +61,7 @@
                     },
                 },
                 render() {
-                    return createVnode(
+                    return EVue.createVnode(
                         "div",
                         {
                             attrs: {
@@ -79,7 +70,7 @@
                         },
                         [
                             this.isShow
-                                ? createVnode(
+                                ? EVue.createVnode(
                                       "p",
                                       {
                                           attrs: {
@@ -88,7 +79,7 @@
                                       },
                                       this.message
                                   )
-                                : createVnode(
+                                : EVue.createVnode(
                                       "h1",
                                       {
                                           attrs: {
@@ -159,6 +150,6 @@
                 vm.isShow = false;
                 vm.update(vm.render());
             }, 4000);
-        </script> -->
+        </script>
     </body>
 </html>
