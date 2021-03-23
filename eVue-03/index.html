@@ -3,7 +3,15 @@
     <head>
         <meta charset="UTF-8" />
         <title>MVVM</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/monokai.min.css"
+        />
+        <style>
+            .wrapper {
+                background: #d3d3e2;
+            }
+        </style>
         <script src="https://cdn.bootcss.com/highlight.js/9.15.10/highlight.min.js"></script>
         <script>
             hljs.initHighlightingOnLoad();
@@ -52,7 +60,7 @@
                         text: "内部对象文本",
                     },
                     code: "const a = 'hello world'; function alertA() {console.log(a)}",
-                    message: "Hello world",
+                    message: "虚拟节点初始化message",
                     isShow: true,
                 },
                 computed: {
@@ -86,8 +94,47 @@
                                               class: "inner",
                                           },
                                       },
+                                      [
+                                          EVue.createVnode(
+                                              "span",
+                                              {
+                                                  attrs: {
+                                                      class: "inner",
+                                                  },
+                                              },
+                                              "副标题 "
+                                          ),
+                                          EVue.createVnode(
+                                              "span",
+                                              {
+                                                  attrs: {
+                                                      class: "inner",
+                                                  },
+                                              },
+                                              " 作者"
+                                          ),
+                                      ],
                                       "change to inner - Hello world"
                                   ),
+
+                            EVue.createVnode(
+                                "p",
+                                {
+                                    attrs: {
+                                        class: "inner",
+                                    },
+                                },
+                                "默认1 : 配置名称，选择配置时显示"
+                            ),
+                            EVue.createVnode(
+                                "p",
+                                {
+                                    attrs: {
+                                        class: "inner",
+                                    },
+                                },
+                                "默认2 : 关闭该界面，放弃本次编辑内容。"
+                            ),
                         ]
                     );
                 },
@@ -130,7 +177,8 @@
                         this.someStr = this.someStr + parseInt(Math.random(1, 100) * 1000);
                     },
                     changeChildSomeStr() {
-                        this.child.someStr = this.child.someStr + parseInt(Math.random(100, 1000) * 1000);
+                        this.child.someStr =
+                            this.child.someStr + parseInt(Math.random(100, 1000) * 1000);
                     },
                 },
                 watch: {},
@@ -140,9 +188,8 @@
                 console.log(arguments);
             });
 
-            // test
             setTimeout(function () {
-                vm.message = "Hello";
+                vm.message = "虚拟节点中p标签变更内容";
                 vm.update(vm.render());
             }, 2000);
 

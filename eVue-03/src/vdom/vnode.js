@@ -1,9 +1,15 @@
+import { isDef } from "../shared/utils";
+
 function Vnode(tag, data, children, text, element) {
     this.tag = tag; // 标签名
     this.data = data; // 存储节点的属性，class，style 等
     this.children = children; // 子元素
     this.text = text; // 文本内容
     this.element = element; // Dom 节点
+    this.isStatic = false; // 是否静态节点
+    this.isComment = false; // 是否注释节点
+    this.key = data && data.key;
+    this.componentInstance = undefined;
 }
 
 export function createVnode(tag, data, children) {
@@ -54,5 +60,11 @@ function createChildren(vnode, children) {
 }
 
 export function sameVnode(vnode1, vnode2) {
-    return vnode1.tag === vnode2.tag;
+    return (
+        vnode1.key === vnode2.key &&
+        vnode1.tag === vnode2.tag &&
+        vnode1.isComment === vnode2.isComment &&
+        isDef(vnode1.data) &&
+        isDef(vnode2.data)
+    );
 }

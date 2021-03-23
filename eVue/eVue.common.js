@@ -4,7 +4,7 @@ let depid = 0;
 class Dep {
   constructor(options) {
     this.id = depid++;
-    this.key = options.key ? options.key : "";
+    this.key = options.key ? options.key : '';
     this.subs = [];
   }
 
@@ -34,7 +34,7 @@ class Dep {
 Dep.target = null;
 
 function observer(data) {
-  if (data !== null && typeof data === "object") {
+  if (data !== null && typeof data === 'object') {
     return new Observer(data);
   }
 
@@ -94,7 +94,7 @@ class Watcher {
     this.depIds = {};
     this.deps = [];
 
-    if (typeof expOrFn === "function") {
+    if (typeof expOrFn === 'function') {
       this.getter = expOrFn;
     } else {
       this.getter = this.parseGetter(expOrFn.trim());
@@ -146,7 +146,7 @@ class Watcher {
 
   parseGetter(exp) {
     if (/[^\w.$]/.test(exp)) return;
-    var exps = exp.split(".");
+    var exps = exp.split('.');
     return function (obj) {
       for (var i = 0, len = exps.length; i < len; i++) {
         if (!obj) return;
@@ -214,10 +214,10 @@ class Compile {
       let attrName = attr.name;
       let attrValue = attr.value; // 如 <span v-text="content"></span> 中指令为 v-text
 
-      if (attrName.indexOf("v-") === 0) {
+      if (attrName.indexOf('v-') === 0) {
         let dir = attrName.substring(2); // 绑定methods
 
-        if (dir.indexOf("on") === 0) {
+        if (dir.indexOf('on') === 0) {
           compileUtil.eventHandler(element, _this.$vm, attrValue, dir);
         } else {
           compileUtil[dir] && compileUtil[dir](element, _this.$vm, attrValue);
@@ -231,19 +231,19 @@ class Compile {
 }
 const compileUtil = {
   text: function (node, vm, exp) {
-    this.bind(node, vm, exp, "text");
+    this.bind(node, vm, exp, 'text');
   },
   html: function (node, vm, exp) {
-    this.bind(node, vm, exp, "html");
+    this.bind(node, vm, exp, 'html');
   },
   model: function (node, vm, exp) {
-    this.bind(node, vm, exp, "model");
+    this.bind(node, vm, exp, 'model');
 
     let _this = this;
 
     let val = _this._getVMVal(vm, exp);
 
-    node.addEventListener("input", function (e) {
+    node.addEventListener('input', function (e) {
       let newValue = e.target.value;
 
       if (val === newValue) {
@@ -256,17 +256,17 @@ const compileUtil = {
     });
   },
   class: function (node, vm, exp) {
-    this.bind(node, vm, exp, "class");
+    this.bind(node, vm, exp, 'class');
   },
   bind: function (node, vm, exp, dir) {
-    let updaterFn = updater[dir + "Updater"];
+    let updaterFn = updater[dir + 'Updater'];
     updaterFn && updaterFn(node, this._getVMVal(vm, exp, dir));
     new Watcher(vm, exp, function (value, oldValue) {
       updaterFn && updaterFn(node, value, oldValue);
     });
   },
   eventHandler: function (node, vm, exp, dir) {
-    let eventType = dir.split(":")[1];
+    let eventType = dir.split(':')[1];
     let fn = vm.options.methods && vm.options.methods[exp];
 
     if (eventType && fn) {
@@ -275,14 +275,14 @@ const compileUtil = {
   },
   _getVMVal: function (vm, exp, dir) {
     let val = vm;
-    exp.split(".").forEach(function (k) {
+    exp.split('.').forEach(function (k) {
       val = val[k.trim()];
     });
     return val;
   },
   _setVMVal: function (vm, exp, value) {
     let val = vm;
-    exp = exp.split(".");
+    exp = exp.split('.');
     exp.forEach(function (k, i) {
       // 非最后一个key，更新val的值
       if (i < exp.length - 1) {
@@ -295,21 +295,31 @@ const compileUtil = {
 };
 const updater = {
   textUpdater: function (node, value) {
-    node.textContent = typeof value == "undefined" ? "" : value;
+    node.textContent = typeof value == 'undefined' ? '' : value;
   },
   htmlUpdater: function (node, value) {
-    node.innerHTML = typeof value == "undefined" ? "" : value;
+    node.innerHTML = typeof value == 'undefined' ? '' : value;
   },
   classUpdater: function (node, value, oldValue) {
     let className = node.className;
-    className = className.replace(oldValue, "").replace(/\s$/, "");
-    let space = className && String(value) ? " " : "";
+    className = className.replace(oldValue, '').replace(/\s$/, '');
+    let space = className && String(value) ? ' ' : '';
     node.className = className + space + value;
   },
   modelUpdater: function (node, value, oldValue) {
-    node.value = typeof value == "undefined" ? "" : value;
+    node.value = typeof value == 'undefined' ? '' : value;
   }
 };
+
+function isUndef(v) {
+  return v === undefined || v === null;
+}
+function isDef(v) {
+  return v !== undefined && v !== null;
+}
+function isTrue(v) {
+  return v === true;
+}
 
 function Vnode(tag, data, children, text, element) {
   this.tag = tag; // 标签名
@@ -321,6 +331,13 @@ function Vnode(tag, data, children, text, element) {
   this.text = text; // 文本内容
 
   this.element = element; // Dom 节点
+
+  this.isStatic = false; // 是否静态节点
+
+  this.isComment = false; // 是否注释节点
+
+  this.key = data && data.key;
+  this.componentInstance = undefined;
 }
 
 function createVnode(tag, data, children) {
@@ -377,7 +394,117 @@ function createChildren(vnode, children) {
 }
 
 function sameVnode(vnode1, vnode2) {
-  return vnode1.tag === vnode2.tag;
+  return vnode1.key === vnode2.key && vnode1.tag === vnode2.tag && vnode1.isComment === vnode2.isComment && isDef(vnode1.data) && isDef(vnode2.data);
+}
+
+function patch(oldVnode, vnode) {
+  // 当新节点不存在
+  if (isUndef(vnode)) {
+
+    return;
+  } // 当旧节点不存在,直接插入新节点
+
+
+  if (isUndef(oldVnode)) {
+    createElement(vnode);
+  } else {
+    const isRealElement = isDef(oldVnode.nodeType);
+
+    if (!isRealElement && sameVnode(oldVnode, vnode)) {
+      // 都为虚拟节点且同类型
+      patchVnode(oldVnode, vnode);
+    } else {
+      if (isRealElement) {
+        oldVnode = emptyNodeAt(oldVnode);
+      }
+
+      const element = oldVnode.element;
+      const parent = element.parentNode;
+
+      if (parent) {
+        createElement(vnode);
+        parent.insertBefore(vnode.element, element);
+        parent.removeChild(element);
+      }
+    }
+  }
+}
+function patchVnode(oldVnode, vnode) {
+  // 当新旧节点完全相同
+  if (oldVnode === vnode) {
+    return;
+  }
+
+  const element = vnode.element = oldVnode.element;
+
+  if (isTrue(oldVnode) && isTrue(vnode) && vnode.key === oldVnode.key) {
+    vnode.componentInstance = oldVnode.componentInstance;
+    return;
+  }
+
+  console.log("vnode :>> ", vnode);
+
+  if (isUndef(vnode.text)) {
+    if (isDef(oldVnode.children) && isDef(vnode.children)) {
+      if (oldVnode.children !== vnode.children) {
+        updateChildren(element, oldVnode.children, vnode.children);
+      }
+    } else if (isDef(vnode.children)) {
+      if (isDef(oldVnode.text)) {
+        element.textConent = "";
+      }
+
+      addVnodes(element);
+    } else if (isDef(oldVnode.children)) ; else if (isDef(oldVnode.text)) {
+      element.textConent = "";
+    }
+  } else {
+    // 新旧节点上的文本节点不一致，更新新节点上的 DOM
+    element.textContent = vnode.text;
+  }
+}
+function updateChildren(parentElement, oldChild, newChild) {
+  let newStartIndex = 0;
+  let newEndIndex = newChild.length - 1;
+  let newStartVnode = newChild[newStartIndex];
+  let newEndVnode = newChild[newEndIndex];
+  let oldStartIndex = 0;
+  let oldEndIndex = oldChild.length - 1;
+  let oldStartVnode = oldChild[oldStartIndex];
+  let oldEndVnode = oldChild[oldEndIndex];
+
+  while (newStartIndex <= newEndIndex && oldStartIndex <= oldEndIndex) {
+    if (isUndef(oldStartVnode)) {
+      oldStartVnode = oldChild[++oldStartIndex];
+    } else if (isUndef(oldEndVnode)) {
+      oldEndVnode = oldChild[--oldEndIndex];
+    } else if (sameVnode(oldStartVnode, newStartVnode)) {
+      patchVnode(oldStartVnode, newStartVnode);
+      oldStartVnode = oldChild[++oldStartIndex];
+      newStartVnode = newChild[++newStartIndex];
+    } else if (sameVnode(oldEndVnode, newEndVnode)) {
+      patchVnode(oldEndVnode, newEndVnode);
+      oldEndVnode = oldChild[--oldEndIndex];
+      newEndVnode = newChild[--newEndIndex];
+    } else if (sameVnode(oldStartVnode, newEndVnode)) {
+      patchVnode(oldStartVnode, newEndVnode);
+      parentElement.insertBefore(oldStartVnode.element, oldEndVnode.element.nextSibling());
+      oldStartVnode = oldChild[++oldStartIndex];
+      newEndVnode = newChild[--newEndIndex];
+    } else if (sameVnode(oldEndVnode, newStartVnode)) {
+      patchVnode(oldEndVnode, newStartVnode);
+      parentElement.insertBefore(oldEndVnode.element, oldStartVnode.element);
+      oldEndVnode = oldChild[--oldEndIndex];
+      newStartVnode = newChild[++newStartIndex];
+    } else {
+      createElement(newStartVnode);
+      newStartVnode = newChild[++newStartIndex];
+    }
+  }
+}
+
+function addVnodes(element) {
+  return createElement(element);
 }
 
 class EVue {
@@ -385,6 +512,8 @@ class EVue {
     this.options = options || {};
     this.data = options.data;
     this.el = options.el || "body";
+    this.__patch__ = patch;
+    this.patch = patch;
     this.initState(); // 初始化data,method,computed,watch
 
     this.$mount(document.getElementById("render"));
@@ -465,9 +594,11 @@ class EVue {
     vm._isMounted && callHook(vm, "beforeUpdate");
 
     if (!prevVnode) {
-      vm.$el = vm.patch(vm.$el, vnode);
+      // 第一次将vue实例挂载到dom节点
+      vm.$el = vm.__patch__(vm.$el, vnode);
     } else {
-      vm.$el = vm.patch(prevVnode, vnode);
+      // 节点的更新，diff的起点
+      vm.$el = vm.__patch__(prevVnode, vnode);
     }
 
     callHook(vm, "updated");
@@ -483,49 +614,6 @@ class EVue {
   render() {
     const vm = this;
     return vm.options.render.call(vm);
-  }
-
-  patch(oldVnode, vnode) {
-    const isRealElement = !!oldVnode.nodeType;
-
-    if (!isRealElement && sameVnode(oldVnode, vnode)) {
-      this.patchNode(oldVnode, vnode);
-    } else {
-      if (isRealElement) {
-        oldVnode = emptyNodeAt(oldVnode);
-      }
-
-      const element = oldVnode.element;
-      const parent = element.parentNode;
-
-      if (parent) {
-        createElement(vnode);
-        parent.insertBefore(vnode.element, element);
-        parent.removeChild(element);
-      }
-    }
-  }
-
-  patchNode(oldNode, newNode) {
-    const element = newNode.element = oldNode.element;
-    const oldC = oldNode.children;
-    const C = newNode.children;
-
-    if (!newNode.text) {
-      if (oldC && C) {
-        this.updateChildren(oldC, C);
-      }
-    } else if (oldNode.text !== newNode.text) {
-      element.textContent = newNode.text;
-    }
-  }
-
-  updateChildren(oldC, C) {
-    if (sameVnode(oldC[0], C[0])) {
-      this.patchNode(oldC[0], C[0]);
-    } else {
-      this.patch(oldC[0], C[0]);
-    }
   }
 
   $watch(key, cb, options) {

@@ -1,14 +1,16 @@
 import { observer } from "./observer";
 import { Compile } from "./compile";
 import { Watcher } from "./watcher";
-import { emptyNodeAt, createElement, sameVnode } from "./vnode";
 import { Dep } from "./dep";
+import { patch } from "./vdom/patch";
 
 export class EVue {
     constructor(options) {
         this.options = options || {};
         this.data = options.data;
         this.el = options.el || "body";
+        this.__patch__ = patch;
+        this.patch = patch;
         this.initState(); // 初始化data,method,computed,watch
         this.$mount(document.getElementById("render"));
         callHook(this, "beforeMount");
@@ -16,6 +18,7 @@ export class EVue {
         this.$compile = new Compile(this.el, this);
         callHook(this, "mounted");
     }
+
     initState() {
         const vm = this;
         const ops = vm.options;
@@ -74,9 +77,11 @@ export class EVue {
         vm._isMounted && callHook(vm, "beforeUpdate");
 
         if (!prevVnode) {
-            vm.$el = vm.patch(vm.$el, vnode);
+            // 第一次将vue实例挂载到dom节点
+            vm.$el = vm.__patch__(vm.$el, vnode);
         } else {
-            vm.$el = vm.patch(prevVnode, vnode);
+            // 节点的更新，diff的起点
+            vm.$el = vm.__patch__(prevVnode, vnode);
         }
         callHook(vm, "updated");
     }
@@ -89,45 +94,6 @@ export class EVue {
     render() {
         const vm = this;
         return vm.options.render.call(vm);
-    }
-    patch(oldVnode, vnode) {
-        const isRealElement = !!oldVnode.nodeType;
-
-        if (!isRealElement && sameVnode(oldVnode, vnode)) {
-            this.patchNode(oldVnode, vnode);
-        } else {
-            if (isRealElement) {
-                oldVnode = emptyNodeAt(oldVnode);
-            }
-            const element = oldVnode.element;
-            const parent = element.parentNode;
-
-            if (parent) {
-                createElement(vnode);
-                parent.insertBefore(vnode.element, element);
-                parent.removeChild(element);
-            }
-        }
-    }
-    patchNode(oldNode, newNode) {
-        const element = (newNode.element = oldNode.element);
-        const oldC = oldNode.children;
-        const C = newNode.children;
-
-        if (!newNode.text) {
-            if (oldC && C) {
-                this.updateChildren(oldC, C);
-            }
-        } else if (oldNode.text !== newNode.text) {
-            element.textContent = newNode.text;
-        }
-    }
-    updateChildren(oldC, C) {
-        if (sameVnode(oldC[0], C[0])) {
-            this.patchNode(oldC[0], C[0]);
-        } else {
-            this.patch(oldC[0], C[0]);
-        }
     }
     $watch(key, cb, options) {
         new Watcher(this, key, cb);
